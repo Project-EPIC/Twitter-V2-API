@@ -1,0 +1,61 @@
+
+
+#===========================================================
+# Part 1: 
+# What are you looking for?
+#===========================================================
+
+# Start and end date of our Query: 
+start_time : '2018-01-01T00:00:00Z'    
+end_time   : '2020-10-31T00:00:00Z'
+
+
+
+# Actual query. See Twitter API Docs for how to build this.
+query: "url:townsendjennings.com"
+    
+
+
+#===========================================================
+# Part 2: 
+# What format do you want the data to come back in?
+#===========================================================
+
+tweet.fields: 'author_id,created_at'
+
+
+# Add user information
+expansions: 'author_id,in_reply_to_user_id'
+
+user.fields: 'username,description'
+
+
+
+#===========================================================
+# Part 3: 
+# How do you want your results?
+
+# Important: Do not add additional fields that are not in https://developer.twitter.com/en/docs/twitter-api/tweets/full-archive-search/api-reference/get-tweets-search-all; otherwise will return a 400 Error.
+#===========================================================
+
+# Print the tweets to stdout? You can write tweets to a file easily this way
+print: False
+
+# If you put a filename here, tweets will be written to it in line-delimited JSON.
+output: 'results.jsonseq'
+
+# Store tweets in a growing list within the object? Not helpful for CLI.
+store: False
+
+
+
+#===========================================================
+# Part 4: (OPTIONAL)
+# API Call Configuration
+#===========================================================
+
+#Tweets per request. Always set to 500 if expecting a lot of data.
+max_results : 10 
+
+#If you'd like to load the bearer token from here. A token given with --token= will overwrite it.
+# bearer_token: AAAA...
