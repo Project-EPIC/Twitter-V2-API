@@ -6,13 +6,12 @@
 #===========================================================
 
 # Start and end date of our Query: 
-start_time : '2018-01-01T00:00:00Z'    
+start_time : '2020-01-01T00:00:00Z'    
 end_time   : '2020-10-31T00:00:00Z'
 
 
-
 # Actual query. See Twitter API Docs for how to build this.
-query: "from:palen"
+query: 'drought (place:Maine OR place:Vermont OR place:Connecticut OR place:"New Hampshire" OR place:"New York" OR place:"New Jersey" OR place:"Massachusetts" OR place:"Rhode Island")'
     
 
 
@@ -21,13 +20,14 @@ query: "from:palen"
 # What format do you want the data to come back in?
 #===========================================================
 
-tweet.fields: 'author_id,created_at,geo'
+tweet.fields: 'author_id,created_at,geo,conversation_id,referenced_tweets'
 
 
 # Add user information
-expansions: 'author_id,in_reply_to_user_id'
+expansions: 'author_id,in_reply_to_user_id,geo.place_id'
 
 user.fields: 'username,description'
+place.fields: 'name'
 
 
 
@@ -42,14 +42,10 @@ user.fields: 'username,description'
 limit: False
 
 # Print the tweets to stdout? You can write tweets to a file easily this way
-# print: True
+print: False
 
 # If you put a filename here, tweets will be written to it in line-delimited JSON.
-output: 'results.jsonseq'
-
-# Store tweets in a growing list within the object? Not helpful for CLI.
-store: False
-
+output: 'drought_northeast.jsonseq'
 
 
 #===========================================================

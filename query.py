@@ -62,6 +62,7 @@ class QueryHandler():
         if response.status_code==400:
             raise Exception("Error (most likely in your query parameters)")
         return response
+   
 
     #There is a lot more than "data" in a tweet, there might be "includes" and "expansions" 
     def parse_results(self, data):
@@ -71,15 +72,20 @@ class QueryHandler():
         
         #Hopefully the most performant way to handle the optional fields, it will get big and ugly though...
         users = {}
+        places = {}
         
         if self._meta.get('result_count'):
                         
             if data.get('includes'):
                 #Build user lookup
-                    if data.get('includes').get('users'):
-                        for u in data.get('includes').get('users'):
-                            users[u["id"]] = u
-
+                if data.get('includes').get('users'):
+                    for u in data.get('includes').get('users'):
+                        users[u["id"]] = u
+                #Build place lookup
+                if data.get('includes').get('places'):
+                    for p in data.get('includes').get('places'):
+                        places[p["id"]] = p
+                            
             for idx, t in enumerate( data.get('data') ):
             
                 self._tweet_count+=1
@@ -87,6 +93,11 @@ class QueryHandler():
                 # Add user information
                 if users.get(t['author_id']):
                     t['user'] = users.get(t['author_id'])
+                
+                # How about place information?
+                if t.get('geo'):
+                    if t['geo'].get('place_id'):
+                        t['place'] = places.get(t['geo']['place_id'])
                 
                 if self._write:
                     self._outfile.write(json.dumps(t)+"\n")
@@ -224,15 +235,6 @@ if __name__ == "__main__":
         params=query_config)
     
     tweet_handler.get_all_tweets(limit=limit)
-    
-   
-    
-    
-#     print("Then initialize the object")
-    
-#     print("Then get all of the tweets")
-    
-#     print("Then be done")
 
     print("\ndone\n") 
     
