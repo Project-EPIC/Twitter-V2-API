@@ -36,17 +36,20 @@ class QueryHandler():
         try: 
             data = self.hit_search_api()
 
+            sys.stderr.write("Query Initialized; {} requests remaining and {} seconds until window resets:\n".format(
+                                self._requests_remaining, self._seconds_remaining))
+
+
             if data:
                 self._oldest_id = 't' + data.get('meta').get('oldest_id')
                 self.parse_results(data)
+                
+                sys.stderr.write(json.dumps(data.get('meta'), indent=4))
+                
+                sys.stderr.write("Latest Tweet:\n")
+                sys.stderr.write(json.dumps(data.get('data')[0], indent=4))
 
-            sys.stderr.write("Query Initialized; {} requests remaining and {} seconds until window resets:\n".format(
-                self._requests_remaining, self._seconds_remaining))
-            sys.stderr.write(json.dumps(data.get('meta'), indent=4))
-            sys.stderr.write("First Tweet:\n")
-            sys.stderr.write(json.dumps(data.get('data')[0], indent=4))
         except:
-            print(data)
             raise
         
     def api_call(self):
@@ -55,32 +58,35 @@ class QueryHandler():
                                  headers=self._headers, 
                                  params=self._params)
         self.update_header_meta(response.headers)
+
+        if response.status_code==400:
+            raise Exception("Error (most likely in your query parameters)")
         return response
 
     #There is a lot more than "data" in a tweet, there might be "includes" and "expansions" 
     def parse_results(self, data):
-        self._meta      = data.get('meta')
-        self._next      = self._meta.get('next_token')
-        self._data      = data
+        self._meta        = data.get('meta')
+        self._next_token  = self._meta.get('next_token')
+        self._data        = data
         
         #Hopefully the most performant way to handle the optional fields, it will get big and ugly though...
-        includes = None
+        users = {}
         
         if self._meta.get('result_count'):
-            
-            #Check for other fields such as includes, users, etc.
+                        
             if data.get('includes'):
-                includes = list(data.get('includes').keys())
-            
+                #Build user lookup
+                    if data.get('includes').get('users'):
+                        for u in data.get('includes').get('users'):
+                            users[u["id"]] = u
+
             for idx, t in enumerate( data.get('data') ):
             
                 self._tweet_count+=1
                 
-                if includes:
-                    for include in includes:
-                        t[include] = data.get('includes')[include][idx]
-                        
-                #Other logic for more expanding fields...
+                # Add user information
+                if users.get(t['author_id']):
+                    t['user'] = users.get(t['author_id'])
                 
                 if self._write:
                     self._outfile.write(json.dumps(t)+"\n")
@@ -121,8 +127,8 @@ class QueryHandler():
 
     def get_all_tweets(self, limit=10):
         count = 1;
-        while self._next:
-            self._params['next_token'] = self._next
+        while self._next_token:
+            self._params['next_token'] = self._next_token
             
             data = self.hit_search_api()
             if data:
@@ -131,7 +137,7 @@ class QueryHandler():
             #Debugging
             count+=1
             if limit and count > limit:
-                sys.stderr.write("\nhit limit, stopping")
+                sys.stderr.write("\nhit limit, stopping; next_token: "+self._next_token)
                 break
             if count%10==0:
                 sys.stderr.write("\r{} Tweets | {} Requests | {} Requests Remaining        ".format(self._tweet_count, count, self._requests_remaining))
@@ -155,7 +161,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    print("\nFirst load the configuration file: ")
+    print("\Loading configuration file: " + args.QUERY_CONFIG_FILE)
     
     try:
         if args.QUERY_CONFIG_FILE.endswith(".json"):
@@ -184,26 +190,30 @@ if __name__ == "__main__":
     # What do we do with the tweets? 
     output  = None
     _write  = False
-    _print  = False
+    _print  = True
     _store  = False
     
     if query_config.get('print'):
         _print=True
         
+    if query_config.get('print')==False:
+        _print=False
     
     if query_config.get('output'):
         _write=True
         output = query_config.get("output")
+        
+    limit = query_config.get('limit')
     
     # Need to remove anything that's not a valid Twitter parameter
     query_config.pop('output', None)
     query_config.pop('store', None)
     query_config.pop('print', None)
     query_config.pop('bearer_token', None)
+    query_config.pop('limit', None)
     
-    print(query_config)
+    sys.stderr.write(json.dumps(query_config, indent=4)+"\n")
 
-           
     # And now we start!
     tweet_handler = QueryHandler(
         headers=HEADERS,
@@ -213,8 +223,9 @@ if __name__ == "__main__":
         outfile=output,
         params=query_config)
     
+    tweet_handler.get_all_tweets(limit=limit)
     
-    
+   
     
     
 #     print("Then initialize the object")
