@@ -107,16 +107,20 @@ class QueryHandler():
                     print(json.dumps(t))
             
     def update_header_meta(self, headers):
-        self._requests_remaining   = int( headers.get('x-rate-limit-remaining') )
-        self._seconds_remaining    = int( headers.get('x-rate-limit-reset') ) - int(time.time())
+        try:
+            self._requests_remaining   = int( headers.get('x-rate-limit-remaining') )
+            self._seconds_remaining    = int( headers.get('x-rate-limit-reset') ) - int(time.time())
+        except:
+            self._requests_remaining -= 1
+            sys.stderr.write("Header metadata error")
         
     def pause_then_query(self, message):
         sys.stderr.write("\n" + message + "\n")
-        sys.stderr.write("TIME: "+str(datetime.now()))
-        sys.stderr.write("Sleeping for {} seconds until window resets   ".format(self._seconds_remaining))
+        sys.stderr.write("TIME: "+str(datetime.now())+"\n")
+        sys.stderr.write("Sleeping for {} seconds until window resets         ".format(self._seconds_remaining))
         
         for t in range(0, int(self._seconds_remaining/5)+1):
-            sys.stderr.write("\rSleeping for {} seconds until window resets   ".format(self._seconds_remaining - 5*t))
+            sys.stderr.write("\rSleeping for {} seconds until window resets       ".format(self._seconds_remaining - 5*t))
             time.sleep(5)
         
         response = self.api_call()
