@@ -29,11 +29,11 @@ class QueryHandler():
         self._requests_remaining     = 1;
         self._seconds_remaining      = 900
         self._results                = []
-        if write: 
-            self._outfile                = open(outfile, 'w')
+        if write:
+            self._outfile                = open(outfile, 'a+')
     
         #Actually send off the first query:
-        try: 
+        try:
             data = self.hit_search_api()
 
             sys.stderr.write("Query Initialized; {} requests remaining and {} seconds until window resets:\n".format(
@@ -142,20 +142,29 @@ class QueryHandler():
 
     def get_all_tweets(self, limit=10):
         count = 1;
+        err_count = 0;
         while self._next_token:
-            self._params['next_token'] = self._next_token
-            
-            data = self.hit_search_api()
-            if data:
-                self.parse_results(data)
+            try:
+                self._params['next_token'] = self._next_token
 
-            #Debugging
-            count+=1
-            if limit and count > limit:
-                sys.stderr.write("\nhit limit, stopping; next_token: "+self._next_token)
-                break
-            if count%10==0:
-                sys.stderr.write("\r{} Tweets | {} Requests | {} Requests Remaining        ".format(self._tweet_count, count, self._requests_remaining))
+                data = self.hit_search_api()
+                if data:
+                    self.parse_results(data)
+
+                #Debugging
+                count+=1
+                if limit and count > limit:
+                    sys.stderr.write("\nhit limit, stopping; next_token: "+self._next_token)
+                    break
+                if count%10==0:
+                    sys.stderr.write("\r{} Tweets | {} Requests | {} Requests Remaining        ".format(self._tweet_count, count, self._requests_remaining))
+            except:
+                err_count+=1
+                sys.stderr.write("\nErrors: {}\n".format(err_count))
+                if err_count > 100:
+                    raise
+                continue
+
         sys.stderr.write("\nFinished; {} tweets | {} requests remaining".format(self._tweet_count, self._requests_remaining))
         self._outfile.close()
     
@@ -237,8 +246,17 @@ if __name__ == "__main__":
         write=_write,
         outfile=output,
         params=query_config)
+
+    try:
     
-    tweet_handler.get_all_tweets(limit=limit)
+        tweet_handler.get_all_tweets(limit=limit)
+        
+    except:
+        
+        print("Something failed; last known _next token was: ")
+        print("\n\t"+ tweet_handler.next +"\n")
+        
+        raise 
 
     print("\ndone\n") 
     
