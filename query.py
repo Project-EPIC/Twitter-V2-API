@@ -41,13 +41,17 @@ class QueryHandler():
 
 
             if data:
-                self._oldest_id = 't' + data.get('meta').get('oldest_id')
-                self.parse_results(data)
-                
-                sys.stderr.write(json.dumps(data.get('meta'), indent=4))
-                
-                sys.stderr.write("Latest Tweet:\n")
-                sys.stderr.write(json.dumps(data.get('data')[0], indent=4))
+                try:
+                    self._oldest_id = 't' + data.get('meta').get('oldest_id')
+                    self.parse_results(data)
+
+                    sys.stderr.write(json.dumps(data.get('meta'), indent=4))
+
+                    sys.stderr.write("Latest Tweet:\n")
+                    sys.stderr.write(json.dumps(data.get('data')[0], indent=4))
+                except:
+                    sys.stderr.write("\n" + "FAILED TO FIND ANY TWEETS?" + "\n")
+                    sys.stderr.write("\n" + json.dumps(data.get('meta')))
 
         except:
             raise
@@ -166,7 +170,8 @@ class QueryHandler():
                 continue
 
         sys.stderr.write("\nFinished; {} tweets | {} requests remaining".format(self._tweet_count, self._requests_remaining))
-        self._outfile.close()
+        if self._write:
+            self._outfile.close()
     
 
 #Runtime 
@@ -179,8 +184,6 @@ parser.add_argument('QUERY_CONFIG_FILE', metavar='QUERY_CONFIG_FILE', type=str,
 parser.add_argument('--token', metavar="BEARER_TOKEN", type=str, help='Bearer Token from an associated Twitter App')
 
 
-
-        
 if __name__ == "__main__":
     
     args = parser.parse_args()
@@ -259,5 +262,3 @@ if __name__ == "__main__":
         raise 
 
     print("\ndone\n") 
-    
-    
