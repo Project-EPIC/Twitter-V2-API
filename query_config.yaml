@@ -4,14 +4,12 @@
 #===========================================================
 
 # Start and end date of our Query: 
-start_time : '2020-11-01T00:00:00Z'
-# end_time   : '2020-12-01T00:13:46Z'
-
-
+start_time : '2021-01-01T00:00:00Z' 
+# end_time   : '2020-12-19T05:00:00Z'
 
 
 # Actual query. See Twitter API Docs for how to build this.
-query: 'vax OR vaccine'
+query: 'from:nws OR to:nws'
 
 
 #===========================================================
@@ -19,14 +17,15 @@ query: 'vax OR vaccine'
 # What format do you want the data to come back in?
 #===========================================================
 
-tweet.fields: 'author_id,created_at,geo,conversation_id,referenced_tweets,public_metrics,in_reply_to_user_id,attachments,entities'
+tweet.fields: 'author_id,created_at,geo,conversation_id,referenced_tweets,public_metrics,in_reply_to_user_id,attachments,entities,source'
 
 # tweet.fields: 'author_id,created_at,conversation_id,referenced_tweets,public_metrics,in_reply_to_user_id'
 
 # Add user information
-expansions: 'author_id,in_reply_to_user_id,geo.place_id'
+expansions: 'author_id,in_reply_to_user_id,geo.place_id,attachments.media_keys'
 # expansions: 'author_id,in_reply_to_user_id'
 
+media.fields: 'type,duration_ms,public_metrics,preview_image_url'
 user.fields: 'username,description,created_at,location,public_metrics'
 place.fields: 'name'
 
@@ -46,7 +45,7 @@ limit: False
 print: False
 
 # If you put a filename here, tweets will be written to it in line-delimited JSON.
-output: 'vax_vaccine_LIMIT-20201224.jsonseq'
+output: 'nws_test.jsonseq'
 
 
 #===========================================================
@@ -54,7 +53,7 @@ output: 'vax_vaccine_LIMIT-20201224.jsonseq'
 # API Call Configuration
 #===========================================================
 
-#Tweets per request. Always set to 500 if expecting a lot of data.
+#Tweets per request. Always set to 500 if expecting more than 500 tweets.
 max_results : 500
 
 #If you'd like to load the bearer token from here. A token given with --token= will overwrite it.
